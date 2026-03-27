@@ -49,7 +49,22 @@ export default function Home() {
   const handleAddTransaction = (transaction: ITransaction) => {
     setTransactionData( (prevState)=> [...prevState, transaction]);
   }
+const handleDeleteTransaction = (id: string) => {
+    setTransactionData((prevState) => prevState.filter(transaction => transaction.id !== id));
+  }
 
+  const [transactionToEdit, setTransactionToEdit] = useState<ITransaction | null>(null);
+
+  const handleEditTransaction = (updatedTransaction: ITransaction) => {
+    setTransactionData((prevState) =>
+      prevState.map((t) => (t.id === updatedTransaction.id ? updatedTransaction : t))
+    );
+  };
+
+  const handleOpenEditModal = (transaction: ITransaction) => {
+    setTransactionToEdit(transaction);
+    setIsFormModalOpen(true); // Abre o mesmo modal roxo de sempre!
+  };
   const calculaTotal = useMemo(() => {
     const totals = transactionData.reduce<TotalCard>((acc, transaction) => {
       if (transaction.type === "INCOME") {
@@ -70,12 +85,20 @@ export default function Home() {
       <Header handleOpenFormModal={() => setIsFormModalOpen(true)}/>
       <BodyContainer>
          <CardContainer totalValues={calculaTotal} />
-         <Table data={transactionData} />
+         <Table data={transactionData} onDelete={handleDeleteTransaction} onEdit={handleOpenEditModal}/>
       </BodyContainer>
-      {isFormModalOpen && <FormModal 
-          closeModal={() => setIsFormModalOpen(false)} 
-          title="Criar Transação" 
-          addTransaction={handleAddTransaction} />}
+      {isFormModalOpen && (
+    <FormModal
+      closeModal={() => {
+        setIsFormModalOpen(false);
+        setTransactionToEdit(null); // Limpa para a próxima vez!
+      }}
+      title={transactionToEdit ? "Editar Transação" : "Criar Transação"}
+      addTransaction={handleAddTransaction}
+      transactionToEdit={transactionToEdit}
+      editTransaction={handleEditTransaction}
+    />
+  )}
     </div>
   );
 }

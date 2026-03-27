@@ -4,15 +4,18 @@ import { TransactionSwitcher } from "../TransactionSwitcher";
 import { TransactionType } from "@/types/transaction";
 import { TransactionFormData, transactionSchema, defaultValues } from "./schema";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 export type FormModalProps = {
    title: string;
    closeModal: () => void;
    addTransaction: (transaction: ITransaction) => void;
+   transactionToEdit?: ITransaction | null;
+   editTransaction?: (transaction: ITransaction) => void;
 }
 
-export const FormModal = ({ title, closeModal, addTransaction }: FormModalProps) => {
+export const FormModal = ({ title, closeModal, addTransaction, transactionToEdit, editTransaction }: FormModalProps) => {
   
   const {
     handleSubmit,
@@ -24,12 +27,26 @@ export const FormModal = ({ title, closeModal, addTransaction }: FormModalProps)
     resolver: yupResolver(transactionSchema),
     defaultValues
   })  
+
+  useEffect(() => {
+    if (transactionToEdit) {
+      setValue("title", transactionToEdit.title);
+      setValue("price", transactionToEdit.price);
+      setValue("category", transactionToEdit.category);
+      setValue("type", transactionToEdit.type as TransactionType);
+    }
+  }, [transactionToEdit, setValue]);
   const handleTypeChange = (type: TransactionType) => {
     setValue("type", type);
   }
 
   const handleSubmitForm = (data: TransactionFormData) => {
-    addTransaction(data as ITransaction);
+    if (transactionToEdit && editTransaction) {
+      editTransaction({ ...data, id: transactionToEdit.id } as ITransaction);
+    } else {
+      addTransaction(data as ITransaction);
+    
+    }
     closeModal();
   }
 
